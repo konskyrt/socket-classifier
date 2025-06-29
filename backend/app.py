@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import os
 import sqlite3
@@ -12,7 +12,14 @@ from utils.database import Database
 import uuid
 import time
 
-app = Flask(__name__)
+# Get the directory of the current file (backend)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Get the parent directory (project root)
+project_root = os.path.dirname(current_dir)
+# Path to the React build folder
+react_build_path = os.path.join(project_root, 'frontend', 'build')
+
+app = Flask(__name__, static_folder=react_build_path, static_url_path='')
 CORS(app)
 
 # Configuration
@@ -34,55 +41,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/', methods=['GET'])
-def home():
-    return '''
-    <html>
-    <head>
-        <title>Electrical Socket Classifier API</title>
-        <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            .endpoint { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
-            .method { color: #007bff; font-weight: bold; }
-        </style>
-    </head>
-    <body>
-        <h1>🔌 Electrical Socket Classifier API</h1>
-        <p>AI-powered socket type classification and product information system.</p>
-        
-        <h2>Available Endpoints:</h2>
-        
-        <div class="endpoint">
-            <span class="method">GET</span> <code>/api/health</code><br>
-            <small>Check API health status</small>
-        </div>
-        
-        <div class="endpoint">
-            <span class="method">GET</span> <code>/api/outlet-types</code><br>
-            <small>List all supported socket types</small>
-        </div>
-        
-        <div class="endpoint">
-            <span class="method">POST</span> <code>/api/classify</code><br>
-            <small>Upload socket image for AI classification (multipart/form-data with 'image' field)</small>
-        </div>
-        
-        <h2>Supported Socket Types:</h2>
-        <ul>
-            <li>NEMA 5-15R (US Standard)</li>
-            <li>BS 1363 (UK)</li>
-            <li>CEE 7/4 (European Schuko)</li>
-            <li>AS 3112 (Australian)</li>
-            <li>JIS C 8303 (Japanese)</li>
-            <li>GFCI (US Safety)</li>
-            <li>USB-A & USB-C</li>
-        </ul>
-        
-        <p><strong>Ready to classify electrical socket images!</strong></p>
-    </body>
-    </html>
-    '''
-
+# API Routes (must come before catch-all route)
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'healthy'})
@@ -127,8 +86,6 @@ def classify_outlet():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-
 @app.route('/api/outlet-types', methods=['GET'])
 def get_outlet_types():
     try:
@@ -136,6 +93,15 @@ def get_outlet_types():
         return jsonify({'outlet_types': outlet_types})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Serve React App (catch-all route - must be last)
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    if path != "" and os.path.exists(os.path.join(react_build_path, path)):
+        return send_from_directory(react_build_path, path)
+    else:
+        return send_from_directory(react_build_path, 'index.html')
 
 if __name__ == '__main__':
     # Initialize database

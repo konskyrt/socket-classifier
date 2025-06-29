@@ -44,7 +44,7 @@ backend/uploads/
 backend/generated/
 backend/data/*.db
 node_modules/
-frontend/build/
+# frontend/build/ - Include build files for deployment
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
