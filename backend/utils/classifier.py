@@ -1,4 +1,3 @@
-import tensorflow as tf
 import numpy as np
 from PIL import Image
 import cv2
@@ -24,35 +23,10 @@ class ElectricalSocketClassifier:
     
     def _build_model(self):
         """Build a CNN model for electrical socket classification"""
-        try:
-            # Using MobileNetV2 as base for transfer learning
-            base_model = tf.keras.applications.MobileNetV2(
-                input_shape=self.input_shape,
-                include_top=False,
-                weights='imagenet'
-            )
-            base_model.trainable = False
-            
-            # Add custom classification head
-            self.model = tf.keras.Sequential([
-                base_model,
-                tf.keras.layers.GlobalAveragePooling2D(),
-                tf.keras.layers.Dropout(0.2),
-                tf.keras.layers.Dense(128, activation='relu'),
-                tf.keras.layers.Dropout(0.2),
-                tf.keras.layers.Dense(len(self.class_names), activation='softmax')
-            ])
-            
-            self.model.compile(
-                optimizer='adam',
-                loss='categorical_crossentropy',
-                metrics=['accuracy']
-            )
-            
-            print("Model built successfully")
-        except Exception as e:
-            print(f"Error building model: {e}. Using demo classification.")
-            self.model = None
+        # For demo purposes, we use rule-based classification
+        # In production, this would load a trained model
+        self.model = None
+        print("Demo classifier initialized - using rule-based classification")
     
     def preprocess_image(self, image_path):
         """Preprocess image for classification"""

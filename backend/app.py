@@ -7,7 +7,6 @@ import json
 from werkzeug.utils import secure_filename
 from PIL import Image
 import numpy as np
-import tensorflow as tf
 from utils.classifier import ElectricalSocketClassifier
 from utils.database import Database
 from utils.stl_generator import STLGenerator
