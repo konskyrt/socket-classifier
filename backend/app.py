@@ -9,7 +9,6 @@ from PIL import Image
 import numpy as np
 from utils.classifier import ElectricalSocketClassifier
 from utils.database import Database
-from utils.stl_generator import STLGenerator
 import uuid
 import time
 
@@ -28,7 +27,6 @@ os.makedirs(app.config['GENERATED_FOLDER'], exist_ok=True)
 # Initialize components
 classifier = ElectricalSocketClassifier()
 database = Database()
-stl_generator = STLGenerator()
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
@@ -80,57 +78,7 @@ def classify_outlet():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/generate-3d', methods=['POST'])
-def generate_3d_model():
-    try:
-        data = request.get_json()
-        
-        outlet_type = data.get('outlet_type')
-        color = data.get('color', 'white')
-        arrangement = data.get('arrangement', 'single')
-        custom_options = data.get('custom_options', {})
-        
-        # Generate unique session ID
-        session_id = str(uuid.uuid4())
-        
-        # Generate STL file
-        stl_filename = f"{session_id}_{outlet_type}_{arrangement}_{color}.stl"
-        stl_path = os.path.join(app.config['GENERATED_FOLDER'], stl_filename)
-        
-        # Get product specifications
-        product_specs = database.get_product_specs(outlet_type)
-        
-        # Generate 3D model
-        stl_generator.generate_outlet_stl(
-            product_specs, 
-            arrangement, 
-            custom_options, 
-            stl_path
-        )
-        
-        return jsonify({
-            'success': True,
-            'session_id': session_id,
-            'filename': stl_filename,
-            'download_url': f'/api/download/{session_id}'
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
-@app.route('/api/download/<session_id>', methods=['GET'])
-def download_file(session_id):
-    try:
-        # Find file with session_id
-        for filename in os.listdir(app.config['GENERATED_FOLDER']):
-            if filename.startswith(session_id):
-                filepath = os.path.join(app.config['GENERATED_FOLDER'], filename)
-                return send_file(filepath, as_attachment=True, download_name=filename)
-        
-        return jsonify({'error': 'File not found'}), 404
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/outlet-types', methods=['GET'])
 def get_outlet_types():
