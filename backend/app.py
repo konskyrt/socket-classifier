@@ -19,7 +19,15 @@ project_root = os.path.dirname(current_dir)
 # Path to the React build folder
 react_build_path = os.path.join(project_root, 'frontend', 'build')
 
-app = Flask(__name__, static_folder=react_build_path, static_url_path='')
+# Debug: Print paths to see what's happening
+print(f"Current dir: {current_dir}")
+print(f"Project root: {project_root}")
+print(f"React build path: {react_build_path}")
+print(f"Build path exists: {os.path.exists(react_build_path)}")
+if os.path.exists(react_build_path):
+    print(f"Build contents: {os.listdir(react_build_path)}")
+
+app = Flask(__name__)
 CORS(app)
 
 # Configuration
