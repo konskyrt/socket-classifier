@@ -27,7 +27,10 @@ print(f"Build path exists: {os.path.exists(react_build_path)}")
 if os.path.exists(react_build_path):
     print(f"Build contents: {os.listdir(react_build_path)}")
 
-app = Flask(__name__)
+# Create Flask app with proper static configuration
+app = Flask(__name__, 
+            static_folder=react_build_path,
+            static_url_path='')
 CORS(app)
 
 # Configuration
@@ -102,14 +105,40 @@ def get_outlet_types():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Serve static files explicitly
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    static_dir = os.path.join(react_build_path, 'static')
+    if os.path.exists(static_dir):
+        return send_from_directory(static_dir, filename)
+    return send_from_directory(react_build_path, filename)
+
 # Serve React App (catch-all route - must be last)
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
-    if path != "" and os.path.exists(os.path.join(react_build_path, path)):
+    # Handle static files (css, js, etc.)
+    if path and (path.endswith('.css') or path.endswith('.js') or path.endswith('.map')):
+        # Try to serve from static folder first
+        static_file_path = os.path.join(react_build_path, 'static', path)
+        if os.path.exists(static_file_path):
+            return send_file(static_file_path)
+        
+        # Try to serve from build root
+        build_file_path = os.path.join(react_build_path, path)
+        if os.path.exists(build_file_path):
+            return send_file(build_file_path)
+    
+    # Handle other static assets
+    if path and os.path.exists(os.path.join(react_build_path, path)):
         return send_from_directory(react_build_path, path)
+    
+    # Default to index.html for SPA routing
+    index_path = os.path.join(react_build_path, 'index.html')
+    if os.path.exists(index_path):
+        return send_file(index_path)
     else:
-        return send_from_directory(react_build_path, 'index.html')
+        return jsonify({'error': 'React build not found. Please run the build process.'}), 404
 
 if __name__ == '__main__':
     # Initialize database

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: steckdose-app
+    env: python
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: cd backend && python app.py
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9
+      - key: NODE_VERSION
+        value: 18 
